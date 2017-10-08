@@ -8,7 +8,7 @@ Loader.prototype = {
     this.image.onload = this.onload;
     this.image.src = raw;
   },
-
+  
   getImage: function() {
     return this.image;
   }

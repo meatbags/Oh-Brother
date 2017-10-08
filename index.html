@@ -6,6 +6,17 @@
   <script src='./index.js'></script>
 </head>
 <body>
-  <input type="file" id="image-loader" name="imageLoader" />
+  <input id='input-image' type='file' />
+  sample area size
+  <input id='input-size' type='number' min='1' max='1000' step='0.25' value='10' />
+  threshold
+  <input id='input-threshold' type='number' min='1' max='100' step='1' value='50' />
+  stretch
+  <input id='input-stretch' type='number' min='0.5' max='4' step='0.01' value='1.5' />
+  thread count
+  <input id='input-threadcount' type='number' min='1' max='200' step='1' value='60' />
+  save as
+  <input id='input-filename' type='text' value='data.dat' />
+  <button id='button-save'>Save</button>
 </body>
 </html>

@@ -175,9 +175,38 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var Parser = function Parser() {};
+var Parser = function Parser() {
+  this.data = [];
+  this.init();
+};
 
-Parser.prototype = {};
+Parser.prototype = {
+  init: function init() {
+    this.threshold = 50;
+    this.stretch = 1.5;
+    this.threadcount = 60;
+    this.size = 10;
+  },
+
+  process: function process() {},
+
+  data: function data(_data) {
+    // pixel data
+    this.data = _data;
+  },
+
+  save: function save(filename, data) {
+    var blob = new Blob([data], { type: 'application/octet-stream' });
+    saveAs(blob, filename);
+  }
+
+  /*
+  var data = new Uint8Array(100);
+  data[0] = 0xFF;
+  var blob = new Blob([data], {type: "application/octet-stream"});
+  saveAs(blob, 'thing.dat');
+  */
+};
 
 exports.default = Parser;
 
