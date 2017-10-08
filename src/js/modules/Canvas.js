@@ -1,30 +1,29 @@
 
 const Canvas = function() {
-  this.image = new Image();
-  this.loaded = false;
   this.init();
 };
 
 Canvas.prototype = {
   init: function() {
     this.cvs = {
-      offscreen: document.createElement('canvas'),
       helper: document.createElement('canvas'),
       preview: document.createElement('canvas')
     };
     this.ctx = {
-      offscreen: this.cvs.offscreen.getContext('2d'),
       helper: this.cvs.helper.getContext('2d'),
       preview: this.cvs.preview.getContext('2d')
     };
+    this.scale = 3;
   },
 
-  drawImage: function() {
+  drawImage: function(image) {
     const ctx = this.ctx.helper;
     const cvs = this.cvs.helper;
 
+    cvs.width = image.width;
+    cvs.height = image.height;
     ctx.clearRect(0, 0, cvs.width, cvs.height);
-    ctx.drawImage(this.image, 0, 0);
+    ctx.drawImage(image, 0, 0);
   },
 
   drawGrid: function(size) {
@@ -42,6 +41,26 @@ Canvas.prototype = {
     }
   },
 
+  drawProcessed: function(data) {
+    //console.log(data)
+    const ctx = this.ctx.preview;
+    const cvs = this.cvs.preview;
+    const d = data.data;
+
+    cvs.width = data.columns * this.scale;
+    cvs.height = data.rows * this.scale * data.stretch;
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    ctx.fillStyle = '#000';
+
+    for (let i=0; i<d.length; i+=1) {
+      if (d[i] == 0) {
+        const x = (i % data.columns) * this.scale;
+        const y = Math.floor(i / data.columns) * this.scale * data.stretch;
+        ctx.fillRect(x, y, this.scale, this.scale * data.stretch);
+      }
+    }
+  },
+
   getHelperCanvas: function() {
     return this.cvs.helper;
   },
@@ -49,33 +68,6 @@ Canvas.prototype = {
   getPreviewCanvas: function() {
     return this.cvs.preview;
   },
-
-  imageToPixelArray: function(image) {
-    const w = image.width;
-    const h = image.height;
-
-    this.cvs.offscreen.width = w;
-    this.cvs.offscreen.height = h;
-    this.ctx.offscreen.drawImage(image, 0, 0);
-
-    const data = this.ctx.offscreen.getImageData(0, 0, w, h).data;
-    const pixels = [];
-    for (let i=0; i<data.length; i+=4) {
-      pixels.push({
-        r: data[i],
-        g: data[i+1],
-        b: data[i+2]
-      });
-    }
-
-    // prep image for draw
-    this.image = image;
-    this.cvs.helper.width = w;
-    this.cvs.helper.height = h;
-    this.loaded = true;
-
-    return pixels;
-  }
 };
 
 export default Canvas;

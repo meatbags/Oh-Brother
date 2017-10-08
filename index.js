@@ -25,10 +25,7 @@ const App = {
     App.canvas = new Brother.Canvas();
     App.parser = new Brother.Parser();
     App.loader.onload = function() {
-      const imgRaw = App.loader.getImageRaw();
-      const data = App.canvas.imageToPixelArray(imgRaw);
-      App.parser.handle(data);
-      App.parser.fitImage(App.canvas.image);
+      App.parser.imageToPixelArray(App.loader.getImageRaw());
       App.ui.input.size.value = App.parser.size;
       App.update();
     };
@@ -45,15 +42,20 @@ const App = {
     };
 
     App.ui.input.size.onchange = function() {
-      App.parser.size = parseFloat(this.value);
-      App.update();
+      if (App.parser.loaded) {
+        App.parser.setSize(parseFloat(this.value));
+        App.update();
+        App.ui.input.threadcount.value = App.parser.threadcount;
+      }
     };
     App.ui.input.threshold.onchange = function() {
-      App.parser.threshold = parseFloat(this.value);
-      App.update();
+      if (App.parser.loaded) {
+        App.parser.setThreshold(parseFloat(this.value));
+        App.update();
+      }
     };
     App.ui.input.stretch.onchange = function() {
-      App.parser.stretch = parseFloat(this.value);
+      App.parser.setStretch(parseFloat(this.value));
       App.update();
     };
     App.ui.input.threadcount.onchange = function() {
@@ -61,10 +63,10 @@ const App = {
       const min = parseFloat(this.min);
       const max = parseFloat(this.max);
 
-      App.parser.threadcount = Math.max(min, Math.min(max, val));
+      App.parser.setThreadcount(Math.max(min, Math.min(max, val)));
       App.ui.input.threadcount.value = App.parser.threadcount;
-      if (App.canvas.loaded) {
-        App.parser.fitImage(App.canvas.image);
+      if (App.parser.loaded) {
+        App.parser.fitToImage();
         App.ui.input.size.value = Math.floor(10 * App.parser.size) / 10.;
         App.update();
       }
@@ -73,8 +75,8 @@ const App = {
       console.log('Save');
     });
     App.ui.button.auto.addEventListener('click', function(){
-      if (App.canvas.loaded) {
-        App.parser.fitImage(App.canvas.image);
+      if (App.parser.loaded) {
+        App.parser.fitToImage();
         App.ui.input.size.value = Math.floor(10 * App.parser.size) / 10.;
         App.update();
       }
@@ -86,8 +88,14 @@ const App = {
   },
 
   update: function() {
-    App.canvas.drawImage();
-    App.canvas.drawGrid(App.parser.size);
+    if (App.parser.loaded) {
+      if (App.parser.needsUpdate) {
+        App.parser.process();
+      }
+      App.canvas.drawImage(App.parser.image);
+      App.canvas.drawGrid(App.parser.size);
+      App.canvas.drawProcessed(App.parser.result);
+    }
   }
 }
 
