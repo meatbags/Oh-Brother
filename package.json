@@ -1,0 +1,29 @@
+{
+  "name": "oh-brother",
+  "version": "1.0.0",
+  "description": "",
+  "main": "gulpfile.js",
+  "scripts": {
+    "webpack": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meatbags/Oh-Brother.git"
+  },
+  "author": "meatbags",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/meatbags/Oh-Brother/issues"
+  },
+  "homepage": "https://github.com/meatbags/Oh-Brother#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.0",
+    "node-normalize-scss": "^3.0.0",
+    "webpack": "^3.6.0",
+    "webpack-preset": "^0.2.0",
+    "webpack-preset-babel": "^0.2.0"
+  }
+}
