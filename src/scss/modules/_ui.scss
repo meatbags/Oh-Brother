@@ -1,0 +1,19 @@
+.ui {
+  .ui__section {
+    padding: $space;
+  }
+
+  .ui__canvas {
+    height: 480px;
+    overflow: scroll;
+  }
+}
+
+label {
+  width: 200px;
+  display:inline-block;
+}
+
+input[type='number'] {
+  width: 100px;
+}

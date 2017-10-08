@@ -115,7 +115,7 @@ Loader.prototype = {
     this.image.src = raw;
   },
 
-  getImage: function getImage() {
+  getImageRaw: function getImageRaw() {
     return this.image;
   }
 };
@@ -135,20 +135,64 @@ Object.defineProperty(exports, "__esModule", {
 
 var Canvas = function Canvas() {
   this.image = new Image();
-  this.cvs = document.createElement('canvas');
-  this.ctx = this.cvs.getContext('2d');
+  this.loaded = false;
+  this.init();
 };
 
 Canvas.prototype = {
+  init: function init() {
+    this.cvs = {
+      offscreen: document.createElement('canvas'),
+      helper: document.createElement('canvas'),
+      preview: document.createElement('canvas')
+    };
+    this.ctx = {
+      offscreen: this.cvs.offscreen.getContext('2d'),
+      helper: this.cvs.helper.getContext('2d'),
+      preview: this.cvs.preview.getContext('2d')
+    };
+  },
+
+  drawImage: function drawImage() {
+    var ctx = this.ctx.helper;
+    var cvs = this.cvs.helper;
+
+    ctx.clearRect(0, 0, cvs.width, cvs.height);
+    ctx.drawImage(this.image, 0, 0);
+  },
+
+  drawGrid: function drawGrid(size) {
+    var cvs = this.cvs.helper;
+    var ctx = this.ctx.helper;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+
+    for (var x = 0; x < cvs.width; x += size) {
+      ctx.fillRect(x, 0, 1, cvs.height);
+    }
+
+    for (var y = 0; y < cvs.height; y += size) {
+      ctx.fillRect(0, y, cvs.width, 1);
+    }
+  },
+
+  getHelperCanvas: function getHelperCanvas() {
+    return this.cvs.helper;
+  },
+
+  getPreviewCanvas: function getPreviewCanvas() {
+    return this.cvs.preview;
+  },
+
   imageToPixelArray: function imageToPixelArray(image) {
     var w = image.width;
     var h = image.height;
 
-    this.cvs.width = w;
-    this.cvs.height = h;
-    this.ctx.drawImage(image, 0, 0);
+    this.cvs.offscreen.width = w;
+    this.cvs.offscreen.height = h;
+    this.ctx.offscreen.drawImage(image, 0, 0);
 
-    var data = this.ctx.getImageData(0, 0, w, h).data;
+    var data = this.ctx.offscreen.getImageData(0, 0, w, h).data;
     var pixels = [];
     for (var i = 0; i < data.length; i += 4) {
       pixels.push({
@@ -157,6 +201,12 @@ Canvas.prototype = {
         b: data[i + 2]
       });
     }
+
+    // prep image for draw
+    this.image = image;
+    this.cvs.helper.width = w;
+    this.cvs.helper.height = h;
+    this.loaded = true;
 
     return pixels;
   }
@@ -183,17 +233,21 @@ var Parser = function Parser() {
 Parser.prototype = {
   init: function init() {
     this.threshold = 50;
-    this.stretch = 1.5;
+    this.stretch = 1;
     this.threadcount = 60;
     this.size = 10;
   },
 
-  process: function process() {},
-
-  data: function data(_data) {
+  handle: function handle(data) {
     // pixel data
-    this.data = _data;
+    this.data = data;
   },
+
+  fitImage: function fitImage(image) {
+    this.size = image.width / this.threadcount;
+  },
+
+  process: function process() {},
 
   save: function save(filename, data) {
     var blob = new Blob([data], { type: 'application/octet-stream' });

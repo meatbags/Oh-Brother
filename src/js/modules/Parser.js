@@ -7,18 +7,22 @@ const Parser = function() {
 Parser.prototype = {
   init: function() {
     this.threshold = 50;
-    this.stretch = 1.5;
+    this.stretch = 1;
     this.threadcount = 60;
     this.size = 10;
   },
 
-  process: function() {
-
-  },
-
-  data: function(data) {
+  handle: function(data) {
     // pixel data
     this.data = data;
+  },
+
+  fitImage: function(image) {
+    this.size = image.width / this.threadcount;
+  },
+
+  process: function() {
+
   },
 
   save: function(filename, data) {

@@ -6,17 +6,34 @@
   <script src='./index.js'></script>
 </head>
 <body>
-  <input id='input-image' type='file' />
-  sample area size
-  <input id='input-size' type='number' min='1' max='1000' step='0.25' value='10' />
-  threshold
-  <input id='input-threshold' type='number' min='1' max='100' step='1' value='50' />
-  stretch
-  <input id='input-stretch' type='number' min='0.5' max='4' step='0.01' value='1.5' />
-  thread count
-  <input id='input-threadcount' type='number' min='1' max='200' step='1' value='60' />
-  save as
-  <input id='input-filename' type='text' value='data.dat' />
-  <button id='button-save'>Save</button>
+  <div class='wrapper'>
+    <div class='grid grid__full ui'>
+      <div class='grid__full ui__section'>
+        <input id='input-image' type='file' />
+      </div>
+      <div class='grid__half ui__section'>
+        <label>Sample Size</label>
+        <input id='input-size' type='number' min='1' max='1000' step='0.25' value='10' /><br />
+        <label>Brightness Threshold</label>
+        <input id='input-threshold' type='number' min='1' max='100' step='1' value='50' /><br />
+        <label>Vertical Stretch</label>
+        <input id='input-stretch' type='number' min='0.5' max='4' step='0.01' value='1' /><br />
+        <label>Horizontal Threads</label>
+        <input id='input-threadcount' type='number' min='1' max='200' step='1' value='60' /><br />
+        <br />
+        <button id='button-auto'>Auto-fit</button>
+      </div>
+      <div class='grid__half ui__section'>
+        Save As:
+        <input id='input-filename' type='text' value='data.dat' />
+        <br /><br />
+        <button id='button-save'>Save</button>
+      </div>
+      <div id='ui-helper-canvas' class='grid__half ui__canvas'>
+      </div>
+      <div id='ui-preview-canvas' class='grid__half ui__canvas'>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
