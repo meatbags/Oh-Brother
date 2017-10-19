@@ -1,7 +1,9 @@
+import Brother from './Brother';
 
 const Parser = function() {
   this.needsUpdate = true;
   this.loaded = false;
+  this.brother = new Brother();
   this.init();
 };
 
@@ -60,6 +62,7 @@ Parser.prototype = {
   setStretch: function(stretch) {
     this.stretch = stretch;
     this.result.stretch = this.stretch;
+    this.needsUpdate = true;
   },
 
   setThreshold: function(threshold) {
@@ -77,13 +80,12 @@ Parser.prototype = {
   },
 
   process: function() {
-    const rowCount = Math.floor(this.image.height / this.size);
-    const w = this.image.width;
+    const sizeStretched = (this.size / this.stretch);
+    const rowCount = Math.floor(this.image.height / sizeStretched);
 
     this.result = {
       rows: rowCount,
       columns: this.threadcount,
-      stretch: this.stretch,
       data: []
     };
 
@@ -91,18 +93,21 @@ Parser.prototype = {
       for (let col=0; col<this.threadcount; col+=1) {
         let brightness = 0;
         let count = 0;
-        const baseIndex = Math.floor(col * this.size + Math.round(row * this.size) * this.image.width);
+        const baseIndex = Math.floor(col * this.size + Math.floor(row * sizeStretched) * this.image.width);
 
         for (let x=0; x<this.size; x+=1) {
-          for (let y=0; y<this.size; y+=1) {
+          for (let y=0; y<sizeStretched; y+=1) {
             const index = baseIndex + x + y * this.image.width;
-            count += 1;
-            brightness += this.getBrightness(this.data[index]);
+
+            if (index < this.data.length) {
+              brightness += this.getBrightness(this.data[index]);
+              count += 1;
+            }
           }
         }
 
-        brightness = ((brightness / count) / 255.) * 100;
-        const res = (brightness >= this.threshold) ? 1 : 0;
+        brightness = (count != 0) ? ((brightness / count) / 255.) * 100 : 0;
+        const res = (brightness >= this.threshold) ? 0 : 1;
 
         this.result.data.push(res);
       }
@@ -111,17 +116,10 @@ Parser.prototype = {
     this.needsUpdate = false;
   },
 
-  convert: function() {
-    console.log(this.result)
-  },
-
   save: function(filename) {
     if (this.result.data) {
       // convert to binary
-      this.convert();
-
-      const data = new Uint8Array(100);
-      data[0] = 0xFF;
+      const data = this.brother.convert(this.result.data, this.result.rows, this.result.columns);
 
       // save data to file
       const blob = new Blob([data], {type:'application/octet-stream'});

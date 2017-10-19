@@ -11,12 +11,16 @@ const App = {
         threadcount: document.getElementById('input-threadcount')
       },
       button: {
-        save: document.getElementById('button-save'),
-        auto: document.getElementById('button-auto')
+        save: document.getElementById('button-save')
+        //, auto: document.getElementById('button-auto')
       },
       view: {
         helper: document.getElementById('ui-helper-canvas'),
         preview: document.getElementById('ui-preview-canvas')
+      },
+      output: {
+        stitches: document.getElementById('input-stitches'),
+        rows: document.getElementById('input-rows'),
       }
     };
 
@@ -38,7 +42,7 @@ const App = {
         App.loader.load(data);
       });
       reader.readAsDataURL(e.target.files[0]);
-      App.ui.input.filename.value = e.target.files[0].name + '.dat';
+      App.ui.input.filename.value = e.target.files[0].name.split('.')[0];
     };
 
     App.ui.input.size.onchange = function() {
@@ -72,8 +76,9 @@ const App = {
       }
     };
     App.ui.button.save.addEventListener('click', function(){
-      App.parser.save(App.ui.input.filename.value);
+      App.parser.save(App.ui.input.filename.value + '.dat');
     });
+    /*
     App.ui.button.auto.addEventListener('click', function(){
       if (App.parser.loaded) {
         App.parser.fitToImage();
@@ -81,6 +86,7 @@ const App = {
         App.update();
       }
     });
+    */
 
     // views
     App.ui.view.helper.appendChild(App.canvas.getHelperCanvas());
@@ -92,6 +98,8 @@ const App = {
       if (App.parser.needsUpdate) {
         App.parser.process();
       }
+      App.ui.output.stitches.value = App.parser.result.columns;
+      App.ui.output.rows.value = App.parser.result.rows;
       App.canvas.drawImage(App.parser.image);
       App.canvas.drawGrid(App.parser.size);
       App.canvas.drawProcessed(App.parser.result);
