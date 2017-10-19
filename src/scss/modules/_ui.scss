@@ -1,6 +1,11 @@
 .ui {
   .ui__section {
     padding: $space;
+
+    .ui__section__title {
+      margin-bottom: $space;
+      text-decoration: underline;
+    }
   }
 
   .ui__canvas {

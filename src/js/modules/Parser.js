@@ -87,6 +87,8 @@ Parser.prototype = {
       data: []
     };
 
+    console.log(this.size);
+
     for (let row=0; row<rowCount; row+=1) {
       for (let col=0; col<this.threadcount; col+=1) {
         let brightness = 0;
@@ -95,8 +97,9 @@ Parser.prototype = {
 
         for (let x=0; x<this.size; x+=1) {
           for (let y=0; y<this.size; y+=1) {
+            const index = Math.floor(baseIndex + x + y * this.image.width);
             count += 1;
-            brightness += this.getBrightness(this.data[baseIndex + x + y * this.image.width]);
+            brightness += this.getBrightness(this.data[index]);
           }
         }
 
