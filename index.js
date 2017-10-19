@@ -72,7 +72,7 @@ const App = {
       }
     };
     App.ui.button.save.addEventListener('click', function(){
-      console.log('Save');
+      App.parser.save(App.ui.input.filename.value);
     });
     App.ui.button.auto.addEventListener('click', function(){
       if (App.parser.loaded) {

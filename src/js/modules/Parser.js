@@ -87,17 +87,15 @@ Parser.prototype = {
       data: []
     };
 
-    console.log(this.size);
-
     for (let row=0; row<rowCount; row+=1) {
       for (let col=0; col<this.threadcount; col+=1) {
         let brightness = 0;
         let count = 0;
-        const baseIndex = Math.floor(col * this.size + row * this.image.width * this.size);
+        const baseIndex = Math.floor(col * this.size + Math.round(row * this.size) * this.image.width);
 
         for (let x=0; x<this.size; x+=1) {
           for (let y=0; y<this.size; y+=1) {
-            const index = Math.floor(baseIndex + x + y * this.image.width);
+            const index = baseIndex + x + y * this.image.width;
             count += 1;
             brightness += this.getBrightness(this.data[index]);
           }
@@ -113,18 +111,25 @@ Parser.prototype = {
     this.needsUpdate = false;
   },
 
-  save: function(filename, data) {
-    // save data to file
-    const blob = new Blob([data], {type:'application/octet-stream'});
-    saveAs(blob, filename);
-  }
+  convert: function() {
+    console.log(this.result)
+  },
 
-  /*
-  var data = new Uint8Array(100);
-  data[0] = 0xFF;
-  var blob = new Blob([data], {type: "application/octet-stream"});
-  saveAs(blob, 'thing.dat');
-  */
+  save: function(filename) {
+    if (this.result.data) {
+      // convert to binary
+      this.convert();
+
+      const data = new Uint8Array(100);
+      data[0] = 0xFF;
+
+      // save data to file
+      const blob = new Blob([data], {type:'application/octet-stream'});
+      saveAs(blob, filename);
+    } else {
+      throw('Error: No data');
+    }
+  }
 };
 
 export default Parser;

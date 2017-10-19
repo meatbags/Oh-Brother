@@ -93,6 +93,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 exports.Loader = _Loader2.default;
 exports.Canvas = _Canvas2.default;
 exports.Parser = _Parser2.default;
+//import './lib/FileSaver.min.js';
 
 /***/ }),
 /* 1 */
@@ -176,7 +177,6 @@ Canvas.prototype = {
   },
 
   drawProcessed: function drawProcessed(data) {
-    //console.log(data)
     var ctx = this.ctx.preview;
     var cvs = this.cvs.preview;
     var d = data.data;
@@ -189,8 +189,9 @@ Canvas.prototype = {
     for (var i = 0; i < d.length; i += 1) {
       if (d[i] == 0) {
         var x = i % data.columns * this.scale;
-        var y = Math.floor(i / data.columns) * this.scale * data.stretch;
-        ctx.fillRect(x, y, this.scale, this.scale * data.stretch);
+        var stretched = Math.round(this.scale * data.stretch);
+        var y = Math.floor(i / data.columns) * stretched;
+        ctx.fillRect(x, y, this.scale, stretched);
       }
     }
   },
@@ -305,17 +306,15 @@ Parser.prototype = {
       data: []
     };
 
-    console.log(this.size);
-
     for (var row = 0; row < rowCount; row += 1) {
       for (var col = 0; col < this.threadcount; col += 1) {
         var brightness = 0;
         var count = 0;
-        var baseIndex = Math.floor(col * this.size + row * this.image.width * this.size);
+        var baseIndex = Math.floor(col * this.size + Math.round(row * this.size) * this.image.width);
 
         for (var x = 0; x < this.size; x += 1) {
           for (var y = 0; y < this.size; y += 1) {
-            var index = Math.floor(baseIndex + x + y * this.image.width);
+            var index = baseIndex + x + y * this.image.width;
             count += 1;
             brightness += this.getBrightness(this.data[index]);
           }
@@ -331,18 +330,25 @@ Parser.prototype = {
     this.needsUpdate = false;
   },
 
-  save: function save(filename, data) {
-    // save data to file
-    var blob = new Blob([data], { type: 'application/octet-stream' });
-    saveAs(blob, filename);
-  }
+  convert: function convert() {
+    console.log(this.result);
+  },
 
-  /*
-  var data = new Uint8Array(100);
-  data[0] = 0xFF;
-  var blob = new Blob([data], {type: "application/octet-stream"});
-  saveAs(blob, 'thing.dat');
-  */
+  save: function save(filename) {
+    if (this.result.data) {
+      // convert to binary
+      this.convert();
+
+      var data = new Uint8Array(100);
+      data[0] = 0xFF;
+
+      // save data to file
+      var blob = new Blob([data], { type: 'application/octet-stream' });
+      saveAs(blob, filename);
+    } else {
+      throw 'Error: No data';
+    }
+  }
 };
 
 exports.default = Parser;

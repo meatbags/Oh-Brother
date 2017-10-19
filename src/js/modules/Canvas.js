@@ -42,7 +42,6 @@ Canvas.prototype = {
   },
 
   drawProcessed: function(data) {
-    //console.log(data)
     const ctx = this.ctx.preview;
     const cvs = this.cvs.preview;
     const d = data.data;
@@ -55,8 +54,9 @@ Canvas.prototype = {
     for (let i=0; i<d.length; i+=1) {
       if (d[i] == 0) {
         const x = (i % data.columns) * this.scale;
-        const y = Math.floor(i / data.columns) * this.scale * data.stretch;
-        ctx.fillRect(x, y, this.scale, this.scale * data.stretch);
+        const stretched = Math.round(this.scale * data.stretch);
+        const y = Math.floor(i / data.columns) * stretched;
+        ctx.fillRect(x, y, this.scale, stretched);
       }
     }
   },
