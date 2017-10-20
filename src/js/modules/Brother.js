@@ -1,40 +1,69 @@
-// convert binary array into Brother-ready format
+// convert to the KH940 / KH930 format
+// https://github.com/stg/knittington/blob/master/doc/kh940_format.txt
 
 const Brother = function() {};
 
 Brother.prototype = {
   convert: function(input, rows, stitches) {
-    // convert input array to brother format
-    // https://github.com/stg/knittington/blob/master/doc/kh940_format.txt
+    // file data
+    const data = new Uint8Array(0x8000);
 
+    // sizing
     const memoBytes = Math.ceil(rows / 2);
     const rowNibbles = Math.ceil(stitches / 4);
     const dataBytes = Math.ceil(rowNibbles * rows / 2);
     const totalBytes = memoBytes + dataBytes;
-    const pad = ((rowNibbles * 4 * rows) % 8 == 0) ? false : true;
     const rowPadding = (rowNibbles * 4) - stitches;
+    const offsetStart = ((rowNibbles * 4 * rows) % 8 == 0) ? false : true;
+
+    // headers
     const offset = 120;
+    const patternNumber = 901;
+    this.writeHeader(data, 0, offset, rows, stitches, patternNumber);
+    this.writeHeader(data, 7, 0, 0, 0, 902);
+    this.writeConstants(data, offset, totalBytes);
 
-    console.log(
-      'Rows:', rows,
-      'Stitches:', stitches,
-      'Data Size:', input.length
-    );
-    console.log(
-      'Memo Bytes:', memoBytes,
-      'Data Bytes:', dataBytes,
-      'Row Nibbles:', rowNibbles,
-      'Pad Data:', pad,
-      'Row Padding:', rowPadding
-    );
-
-    // create arrays
+    // format data
     const memo = new Uint8Array(memoBytes);
     const pattern = new Uint8Array(dataBytes);
-    const data = new Uint8Array(0x8000);
+    this.writeInputToPattern(input, pattern, stitches, offsetStart, rowPadding);
 
+    // write memo and pattern to file data
+    let address = 0x7EDF;
+
+    for (let i=memo.length-1; i>-1; i-=1) {
+      data[address] = memo[i];
+      address -= 1;
+    }
+
+    for (let i=pattern.length-1; i>-1; i-=1) {
+      data[address] = pattern[i];
+      address -= 1;
+    }
+
+    // log output
+    this.logs = [];
+    this.writeToLogs(
+      'Rows:', rows, 'Stitches:', stitches, 'Data Size:', input.length, '<br />',
+      'Memo Bytes:', memoBytes, 'Data Bytes:', dataBytes, 'Row Nibbles:', rowNibbles, 'Offset Data:', offsetStart, 'Row Padding:', rowPadding, '<br />',
+      this.getHeader(data, 0), '<br />',
+      this.sampleHex(pattern)
+    );
+
+    return data;
+  },
+
+  copyValue: function(data, index, bytes, value) {
+    // copy 8-bit value to memory locations
+    while (bytes > 0) {
+      bytes -= 1;
+      data[index + bytes] = value;
+    }
+  },
+
+  writeInputToPattern: function(input, pattern, stitches, offsetStart, rowPadding) {
     // write pattern
-    let counter = pad ? 4 : 0;
+    let counter = offsetStart ? 4 : 0;
 
     for (let i=0; i<input.length; i+=1) {
       let shift = 1;
@@ -52,36 +81,6 @@ Brother.prototype = {
 
       // increment counter
       counter += 1;
-    }
-
-    this.logSampleHex(pattern);
-
-    // write memo data and pattern data
-    // data is written backwards
-    let address = 0x7EDF;
-    let size = memo.length + pattern.length;
-
-    for (let i=memo.length-1; i>-1; i-=1) {
-      data[address] = memo[i];
-      address -= 1;
-    }
-
-    for (let i=pattern.length-1; i>-1; i-=1) {
-      data[address] = pattern[i];
-      address -= 1;
-    }
-
-    this.writeHeaders(data, rows, stitches);
-    this.writeConstants(data, offset, size);
-
-    return data;
-  },
-
-  copyValue: function(data, index, bytes, value) {
-    // copy 8-bit value to memory locations
-    while (bytes > 0) {
-      bytes -= 1;
-      data[index + bytes] = value;
     }
   },
 
@@ -106,26 +105,17 @@ Brother.prototype = {
     return ((nib0 << 8) + (nib1 << 4) + nib2);
   },
 
-  writeHeaders: function(data, rows, stitches) {
+  writeHeader: function(data, address, offset, rows, stitches, patternNumber) {
     // header is structured in nibbles
     // OO OO HH HW WW ON NN
-    // Offset, Height, Width, 0x00, Number
+    // offset, height, width, 0x0, number
 
-    const offset = this.decimalToNibble3(120);
     const height = this.decimalToNibble3(rows);
     const width = this.decimalToNibble3(stitches);
-    const heightWidth = (height << 12) + width;
-    const patternNum = this.decimalToNibble3(901);
 
-    this.writeIndex(data, 0x0000, 2, offset);
-    this.writeIndex(data, 0x0002, 3, heightWidth);
-    this.writeIndex(data, 0x0005, 2, patternNum);
-
-    console.log(
-      'Offset:', offset.toString(16),
-      'Height, Width:', height.toString(16), width.toString(16),
-      'Num:', patternNum.toString(16)
-    );
+    this.writeIndex(data, address + 0x0, 2, this.decimalToNibble3(offset));
+    this.writeIndex(data, address + 0x2, 3, (height << 12) + width);
+    this.writeIndex(data, address + 0x5, 2, this.decimalToNibble3(patternNumber));
   },
 
   writeConstants: function(data, offset, size) {
@@ -133,37 +123,62 @@ Brother.prototype = {
     const nextOffset = offset + size;
     const start = offset + size - 1;
 
-    this.copyValue(data, 0x7EE0, 7, 0x55);        // AREA0
+    //this.copyValue(data, 0x7EE0, 7, 0x55);        // AREA0
     this.copyValue(data, 0x7EE7, 25, 0x00);       // AREA1
     // CONTROL_DATA
     this.writeIndex(data, 0x7F00, 2, nextOffset); // PATTERN_PTR1 *
     this.writeIndex(data, 0x7F02, 2, 0x0001);     // UNK1
-    this.writeIndex(data, 0x7F04, 2, nextOffset); // PATTERN_PTR0 *
-    this.writeIndex(data, 0x7F06, 2, offset);     // LAST_BOTTOM *
-    this.writeIndex(data, 0x7F08, 2, 0x0000);     // UNK2
-    this.writeIndex(data, 0x7F0A, 2, start);      // LAST_TOP
-    this.writeIndex(data, 0x7F0C, 4, 0x00008100); // UNK3
-    this.writeIndex(data, 0x7F10, 2, 0x7FF9);     // HEADER_PTR *
+    //this.writeIndex(data, 0x7F04, 2, nextOffset); // PATTERN_PTR0 *
+    //this.writeIndex(data, 0x7F06, 2, offset);     // LAST_BOTTOM *
+    //this.writeIndex(data, 0x7F08, 2, 0x0000);     // UNK2
+    //this.writeIndex(data, 0x7F0A, 2, start);      // LAST_TOP
+    //this.writeIndex(data, 0x7F0C, 4, 0x00008100); // UNK3
+    this.writeIndex(data, 0x7F0C, 4, 0x00008300); // UNK3
+    this.writeIndex(data, 0x7F10, 2, 0x7FF2);     // HEADER_PTR *
     this.writeIndex(data, 0x7F12, 2, 0x0000);     // UNK_PTR
     this.writeIndex(data, 0x7F14, 3, 0x000000);   // UNK4
     // /CONTROL_DATA
     this.copyValue(data, 0x7F17, 25, 0x00);       // AREA2
     this.copyValue(data, 0x7F30, 186, 0x00);      // AREA3
     this.copyValue(data, 0x7FEC, 19, 0x00);       // AREA4
-    this.writeIndex(data, 0x7FEA, 2, 0x1901);     // LOADED_PATTERN *
-    this.writeIndex(data, 0x7FFF, 1, 0x02);       // LAST_BYTE
+    this.writeIndex(data, 0x7FEA, 2, 0x2901);     // LOADED_PATTERN *
+    //this.writeIndex(data, 0x7FFF, 1, 0x02);       // LAST_BYTE
+    this.writeIndex(data, 0x7FFC, 4, 0x30001030);
   },
 
-  logSampleHex: function(data) {
-    // print some values
-    let print = 'SAMPLE: ';
+  writeToLogs: function() {
+    let text = '';
+
+    for (let i=0; i<arguments.length; i+=1) {
+      text += ' ' + arguments[i];
+    }
+
+    this.logs.push(text);
+  },
+
+  getLogs: function() {
+    return this.logs.join('<br />');
+  },
+
+  getHeader: function(data, address) {
+    let text = 'HEADER ';
+
+    for (var i=0; i<7; i+=1) {
+      text += data[address + i].toString(16) + ' ';
+    }
+
+    return text;
+  },
+
+  sampleHex: function(data) {
+    let sample = 'SAMPLE: ';
 
     for (var i=0; i<data.length && i<16; i+=1) {
       const val = data[i];
-      print += val.toString(16) + ' ';
+      sample += val.toString(16) + ' ';
     }
 
-    console.log(print);
+    return sample;
   }
 };
 

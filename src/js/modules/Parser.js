@@ -127,6 +127,10 @@ Parser.prototype = {
     } else {
       throw('Error: No data');
     }
+  },
+
+  getLogs: function() {
+    return this.brother.getLogs();
   }
 };
 

@@ -21,6 +21,7 @@ const App = {
       output: {
         stitches: document.getElementById('input-stitches'),
         rows: document.getElementById('input-rows'),
+        console: document.getElementById('ui-console')
       }
     };
 
@@ -77,6 +78,7 @@ const App = {
     };
     App.ui.button.save.addEventListener('click', function(){
       App.parser.save(App.ui.input.filename.value + '.dat');
+      App.ui.output.console.innerHTML = App.parser.getLogs();
     });
     /*
     App.ui.button.auto.addEventListener('click', function(){
