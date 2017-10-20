@@ -21,7 +21,7 @@ Brother.prototype = {
     const patternNumber = 901;
     this.writeHeader(data, 0, offset, rows, stitches, patternNumber);
     this.writeHeader(data, 7, 0, 0, 0, 902);
-    this.writeConstants(data, offset, totalBytes);
+    this.writeConstants(data, stitches, offset, totalBytes);
 
     // format data
     const memo = new Uint8Array(memoBytes);
@@ -118,7 +118,7 @@ Brother.prototype = {
     this.writeIndex(data, address + 0x5, 2, this.decimalToNibble3(patternNumber));
   },
 
-  writeConstants: function(data, offset, size) {
+  writeConstants: function(data, stitches, offset, size) {
     // NOTE: *requires update in future if more than one pattern is to be loaded
     const nextOffset = offset + size;
     const start = offset + size - 1;
@@ -143,7 +143,10 @@ Brother.prototype = {
     this.copyValue(data, 0x7FEC, 19, 0x00);       // AREA4
     this.writeIndex(data, 0x7FEA, 2, 0x2901);     // LOADED_PATTERN *
     //this.writeIndex(data, 0x7FFF, 1, 0x02);       // LAST_BYTE
-    this.writeIndex(data, 0x7FFC, 4, 0x30001030);
+    //this.writeIndex(data, 0x7FFC, 4, 0x30001030);
+
+    const centreOffset = this.decimalToNibble3(Math.round(stitches / 2));
+    this.writeIndex(data, 0x7FFC, 4, centreOffset);
   },
 
   writeToLogs: function() {
