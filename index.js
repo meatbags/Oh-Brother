@@ -8,7 +8,9 @@ const App = {
         size: document.getElementById('input-size'),
         threshold: document.getElementById('input-threshold'),
         stretch: document.getElementById('input-stretch'),
-        threadcount: document.getElementById('input-threadcount')
+        threadcount: document.getElementById('input-threadcount'),
+        warning: document.getElementById('input-warning'),
+        warningCheckbox: document.getElementById('input-warningcheckbox')
       },
       button: {
         save: document.getElementById('button-save')
@@ -63,6 +65,12 @@ const App = {
       App.parser.setStretch(parseFloat(this.value));
       App.update();
     };
+    App.ui.input.warning.onchange = function() {
+      App.update();
+    }
+    App.ui.input.warningCheckbox.onchange = function() {
+      App.update();
+    }
     App.ui.input.threadcount.onchange = function() {
       const val = Math.floor(parseFloat(this.value));
       const min = parseFloat(this.min);
@@ -104,7 +112,11 @@ const App = {
       App.ui.output.rows.value = App.parser.result.rows;
       App.canvas.drawImage(App.parser.image);
       App.canvas.drawGrid(App.parser.size);
-      App.canvas.drawProcessed(App.parser.result);
+      App.canvas.drawProcessed(
+        App.parser.result,
+        App.ui.input.warningCheckbox.checked,
+        parseFloat(App.ui.input.warning.value)
+      )
     }
   }
 }

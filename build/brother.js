@@ -178,7 +178,7 @@ Canvas.prototype = {
     }
   },
 
-  drawProcessed: function drawProcessed(data) {
+  drawProcessed: function drawProcessed(data, warn, warnStitches) {
     var ctx = this.ctx.preview;
     var cvs = this.cvs.preview;
     var d = data.data;
@@ -188,11 +188,41 @@ Canvas.prototype = {
     ctx.clearRect(0, 0, cvs.width, cvs.height);
     ctx.fillStyle = '#000';
 
-    for (var i = 0; i < d.length; i += 1) {
-      if (d[i] == 1) {
-        var x = i % data.columns * this.scale;
-        var y = Math.floor(i / data.columns) * this.scale;
-        ctx.fillRect(x, y, this.scale, this.scale);
+    if (!warn) {
+      for (var i = 0; i < d.length; i += 1) {
+        if (d[i] == 1) {
+          var x = i % data.columns * this.scale;
+          var y = Math.floor(i / data.columns) * this.scale;
+
+          ctx.fillRect(x, y, this.scale, this.scale);
+        }
+      }
+    } else {
+      var siblings = 0;
+
+      for (var _i = 0; _i < d.length; _i += 1) {
+        var _x = _i % data.columns * this.scale;
+        var _y = Math.floor(_i / data.columns) * this.scale;
+
+        if (_x == 0) {
+          siblings = 0;
+        } else {
+          if (d[_i] != d[_i - 1]) {
+            siblings = 0;
+          } else {
+            siblings += 1;
+          }
+        }
+
+        if (siblings < warnStitches) {
+          // no warning
+          ctx.fillStyle = d[_i] == 1 ? '#000' : '#fff';
+        } else {
+          // warning colour
+          ctx.fillStyle = d[_i] == 1 ? '#800' : '#f88';
+        }
+
+        ctx.fillRect(_x, _y, this.scale, this.scale);
       }
     }
   },
